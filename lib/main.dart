@@ -4,7 +4,7 @@ void main() {
   runApp(const FocusTrackApp());
 }
 
-/// Widget raiz inmutable que configura el tema visual de la aplicacion
+/// Widget raíz inmutable que configura el tema visual de la aplicación
 class FocusTrackApp extends StatelessWidget {
   const FocusTrackApp({super.key});
 
@@ -37,7 +37,11 @@ class PantallaPrincipalMetas extends StatefulWidget {
 class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
   int _metasCompletadas = 0;
   final int _metaObjetivo = 5;
+  final int _limiteMaximoMetas = 10; //Límite máximo de 10 metas diarias
   String _nivelProductividad = 'Inicial';
+
+  //Estado para el selector de prioridad
+  String _prioridadSeleccionada = 'Media';
 
   void _actualizarNivel() {
     if (_metasCompletadas == 0) {
@@ -54,8 +58,31 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
 
   void _incrementarMeta() {
     setState(() {
-      _metasCompletadas++;
-      _actualizarNivel();
+      //Validación para no rebasar las 10 metas e imprimir SnackBar de aviso
+      if (_metasCompletadas < _limiteMaximoMetas) {
+        _metasCompletadas++;
+        _actualizarNivel();
+
+        if (_metasCompletadas == _limiteMaximoMetas) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Ha alcanzado el límite máximo diario de metas (10/10). ¡Excelente jornada!',
+              ),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Ha alcanzado el límite máximo diario de metas (10/10). ¡Excelente jornada!',
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     });
   }
 
@@ -108,7 +135,7 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final colores = tema.colorScheme;
-    final porcentaje = (_metasCompletadas / _metaObjetivo).clamp(0.0, 1.0);
+    final porcentaje = (_metasCompletadas / _limiteMaximoMetas).clamp(0.0, 1.0);
 
     return Scaffold(
       appBar: AppBar(
@@ -154,7 +181,7 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
                       ),
                       const SizedBox(height: 8.0),
                       Text(
-                        '$_metasCompletadas / $_metaObjetivo',
+                        '$_metasCompletadas / $_limiteMaximoMetas',
                         style: tema.textTheme.displayMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colores.primary,
@@ -197,6 +224,24 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
               ),
               const SizedBox(height: 24.0),
 
+              //Selector de Estado de Prioridad
+              Text(
+                'Prioridad de la Sesión',
+                style: tema.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _construirChipPrioridad('Baja', Colors.blueGrey),
+                  _construirChipPrioridad('Media', Colors.orange),
+                  _construirChipPrioridad('Alta', Colors.red),
+                ],
+              ),
+              const SizedBox(height: 24.0),
+
               // Panel de Informacion Tecnica
               Card(
                 elevation: 1.0,
@@ -204,12 +249,11 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
                   borderRadius: BorderRadius.circular(12.0),
                   side: BorderSide(color: colores.outlineVariant),
                 ),
-                child: const ListTile(
-                  leading: Icon(Icons.info_outline),
-                  title: Text('Sesión Móvil Activa'),
+                child: ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('Sesión Móvil Activa'),
                   subtitle: Text(
-                    'Renderizado nativo impulsado por el motor Impeller '
-                    'y gestionado con Hot Reload.',
+                    'Prioridad actual: $_prioridadSeleccionada | Impeller & Hot Reload.',
                   ),
                 ),
               ),
@@ -241,6 +285,27 @@ class _PantallaPrincipalMetasState extends State<PantallaPrincipalMetas> {
           ),
         ],
       ),
+    );
+  }
+
+  // Widget auxiliar para los chips de prioridad
+  Widget _construirChipPrioridad(String nivel, Color colorBase) {
+    final bool seleccionado = _prioridadSeleccionada == nivel;
+    return ChoiceChip(
+      label: Text(nivel),
+      selected: seleccionado,
+      selectedColor: colorBase.withValues(alpha: 0.3),
+      labelStyle: TextStyle(
+        color: seleccionado ? colorBase : Colors.black87,
+        fontWeight: FontWeight.bold,
+      ),
+      onSelected: (bool selected) {
+        setState(() {
+          if (selected) {
+            _prioridadSeleccionada = nivel;
+          }
+        });
+      },
     );
   }
 }
